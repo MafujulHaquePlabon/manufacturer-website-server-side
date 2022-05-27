@@ -48,9 +48,21 @@ async function run() {
      app.post('/orders', async (req, res) => {
         const orders = req.body;
         const result = await orderCollection.insertOne(orders);
-        console.log(result)
         res.send(result);
-    })
+    });
+
+    app.get('/orders'/* , verifyJWT */, async (req, res) => {
+      const email = req.query.email;
+     // const decodedEmail = req.decoded.email;
+    //  if (patient === decodedEmail) {
+        const query = { email: email };
+        const orders = await orderCollection.find(query).toArray();
+       /*  return */ res.send(orders);
+    //  }
+    /*   else {
+        return res.status(403).send({ message: 'forbidden access' });
+      } */
+    });
    
     }
     finally {
