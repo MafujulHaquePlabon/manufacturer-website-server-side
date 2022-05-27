@@ -15,6 +15,7 @@ async function run() {
       await client.connect();
       console.log('database connected')
       const carPartsItemsCollection = client.db('Car_Parts_Manufacturer_Admin').collection('carPartsItems');
+      const orderCollection = client.db('Car_Parts_Manufacturer_Admin').collection('orders');
       //carPartsItems API or route
       app.get('/carPartsItems', async (req, res) => {
         const query = {};
@@ -43,8 +44,14 @@ async function run() {
         const result = await carPartsItemsCollection.updateOne(filter, updatedDoc, options);
         res.send(result);
 
+    });
+     app.post('/orders', async (req, res) => {
+        const orders = req.body;
+        const result = await orderCollection.insertOne(orders);
+        console.log(result)
+        res.send(result);
     })
-  
+   
     }
     finally {
   
