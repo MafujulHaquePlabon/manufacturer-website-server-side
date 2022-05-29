@@ -32,6 +32,7 @@ async function run() {
       const carPartsItemsCollection = client.db('Car_Parts_Manufacturer_Admin').collection('carPartsItems'); 
       const orderCollection = client.db('Car_Parts_Manufacturer_Admin').collection('orders');
       const userCollection = client.db('Car_Parts_Manufacturer_Admin').collection('users');
+      const productCollection = client.db('Car_Parts_Manufacturer_Admin').collection('product');
 
       //carPartsItems API or route
       app.get('/carPartsItems', async (req, res) => {
@@ -123,7 +124,16 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc, options);
       const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res.send({ result, token });
-    });  
+    }); 
+    app.post('/product' , verifyJWT, verifyAdmin , async (req, res) => {
+      const product = req.body;
+      const result = await productCollection.insertOne(product);
+      res.send(result);
+    }); 
+    app.get('/product', verifyJWT, verifyAdmin, async (req, res) => {
+      const product = await productCollection.find().toArray();
+      res.send(product);
+    });
    
     }
     finally {
