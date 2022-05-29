@@ -134,6 +134,14 @@ async function run() {
       const product = await productCollection.find().toArray();
       res.send(product);
     });
+
+    app.delete('/product/:id', async (req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await productCollection.deleteOne(query);
+      console.log('connect sucess')
+      res.send(result);
+  });
    
     }
     finally {
