@@ -3,6 +3,12 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
+
+//var nodemailer = require('nodemailer');
+//var sgTransport = require('nodemailer-sendgrid-transport');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+
 const app = express();
 const port = process.env.PORT || 5000; 
 app.use(cors());
@@ -33,6 +39,7 @@ async function run() {
       const orderCollection = client.db('Car_Parts_Manufacturer_Admin').collection('orders');
       const userCollection = client.db('Car_Parts_Manufacturer_Admin').collection('users');
       const productCollection = client.db('Car_Parts_Manufacturer_Admin').collection('product');
+      const paymentCollection = client.db('Car_Parts_Manufacturer_Admin').collection('payments');
 
       //carPartsItems API or route
       app.get('/carPartsItems', async (req, res) => {
@@ -81,9 +88,31 @@ async function run() {
         return res.status(403).send({ message: 'forbidden access' });
       } 
     });
+
+    app.get('/orders/:id', verifyJWT, async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const orders = await orderCollection.findOne(query);
+      res.send(orders);
+    });
     app.get('/user',  verifyJWT,  async (req, res) => {
       const users = await userCollection.find().toArray();
       res.send(users);
+    });
+    app.patch('/orders/:id', verifyJWT, async(req, res) =>{
+      const id  = req.params.id;
+      const payment = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId
+        }
+      }
+
+      const result = await paymentCollection.insertOne(payment);
+      const updatedOrders = await orderCollection.updateOne(filter, updatedDoc);
+      res.send(updatedOrders);
     });
 
     const verifyAdmin = async (req, res, next) => {
@@ -96,6 +125,18 @@ async function run() {
         res.status(403).send({ message: 'forbidden' });
       }
     }
+    
+    app.post('/create-payment-intent', verifyJWT, async(req, res) =>{
+      const service = req.body;
+      const price = service.price;
+      const amount = price*100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount : amount,
+        currency: 'usd',
+        payment_method_types:['card']
+      });
+      res.send({clientSecret: paymentIntent.client_secret})
+    });
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
