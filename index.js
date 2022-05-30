@@ -70,12 +70,30 @@ async function run() {
         res.send(result);
 
     });
-     app.post('/orders', async (req, res) => {
+
+app.put('/users/:email', async (req, res) => {
+  const email = req.params.email;
+  const users = req.body;
+  const filter = { email: email };
+  const options = { upsert: true };
+  const updateDoc = {
+    $set:users,
+  };
+  const result = await userCollection.updateOne(filter, updateDoc, options);
+  
+  res.send( result);
+});
+app.get('/users/:email', async (req, res) => {
+  const email = req.params.email;
+  const users = await userCollection.findOne({email:email});
+  console.log(users)
+  res.send(users)
+})
+   app.post('/orders', async (req, res) => {
         const orders = req.body;
         const result = await orderCollection.insertOne(orders);
         res.send(result);
     });
-
     app.get('/orders',verifyJWT, async (req, res) => {
       const email = req.query.email;
       const decodedEmail = req.decoded.email;
@@ -152,8 +170,6 @@ async function run() {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     }) ;
-    
-  
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -175,7 +191,6 @@ async function run() {
       const product = await productCollection.find().toArray();
       res.send(product);
     });
-
     app.delete('/product/:id', async (req, res) =>{
       const id = req.params.id;
       const query = {_id: ObjectId(id)};
@@ -191,9 +206,6 @@ async function run() {
   }
   
   run().catch(console.dir);
-
-
-
 
 app.get('/', (req, res) => {
     res.send('Hello From Car Parts Manufacturer !')
